@@ -127,15 +127,15 @@ export const VideoArchive: React.FC<VideoArchiveProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Search Box */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          {/* Search Box (Compact) */}
+          <div className="relative w-36 sm:w-44">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search barcode..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
+              className={`w-full rounded-xl pl-8 pr-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
                 isDark
                   ? 'bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500'
                   : 'bg-zinc-50 border border-zinc-300 text-zinc-900 placeholder-zinc-400'

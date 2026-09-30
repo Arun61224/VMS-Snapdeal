@@ -3,7 +3,6 @@ import { TimestampConfig, AppSettings, RecordedVideo } from '../types';
 import { computeCurrentDateTime, drawTimestampOnCanvas } from '../utils/timestampRenderer';
 import { CameraBarcodeScanner, setupHardwareBarcodeScanner } from '../utils/barcodeScanner';
 import { playBarcodeBeep, playRecordStartSound, playRecordStopSound } from '../utils/audio';
-import { ManualBarcodeInput } from './ManualBarcodeInput';
 import {
   Square,
   AlertCircle,
@@ -11,6 +10,10 @@ import {
   Mic,
   MicOff,
   CheckCircle,
+  Scan,
+  Play,
+  Camera,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface LiveRecorderProps {
@@ -33,6 +36,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
   const recordedChunksRef = useRef<Blob[]>([]);
   const animationFrameRef = useRef<number | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
@@ -40,6 +44,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
 
+  const [barcodeInput, setBarcodeInput] = useState('');
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [activeBarcode, setActiveBarcode] = useState<string | null>(null);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
@@ -59,6 +64,13 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
       customStartMsRef.current = undefined;
     }
   }, [timestampConfig]);
+
+  // Auto-focus input when ready
+  useEffect(() => {
+    if (!isRecording && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isRecording]);
 
   const updateDeviceList = useCallback(async () => {
     try {
@@ -254,7 +266,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
       }, 1000);
 
       setStatusNotification({
-        message: `Recording Started for Barcode: ${barcode}`,
+        message: `Recording Started: ${barcode}`,
         type: 'success',
       });
       setTimeout(() => setStatusNotification(null), 3500);
@@ -343,6 +355,15 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
     }, 100);
   };
 
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = barcodeInput.trim();
+    if (code) {
+      startRecording(code);
+      setBarcodeInput('');
+    }
+  };
+
   // Hardware Scanner Gun keystroke detection
   useEffect(() => {
     const cleanup = setupHardwareBarcodeScanner({
@@ -425,125 +446,238 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
         </div>
       )}
 
-      {/* Compact Live Camera Window (Restricted Height so Barcode Scanner is visible without scrolling) */}
-      <div
-        className={`relative rounded-2xl border shadow-lg overflow-hidden transition-colors ${
-          isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-black border-zinc-300'
-        }`}
-      >
-        <video ref={videoElementRef} className="hidden" playsInline muted autoPlay />
+      {/* SIDE-BY-SIDE WORKSPACE LAYOUT (Fills side empty space perfectly!) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+        {/* Left Column: Live Camera Window (lg:col-span-8) */}
+        <div
+          className={`lg:col-span-8 relative rounded-2xl border shadow-lg overflow-hidden flex flex-col justify-center transition-colors ${
+            isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-black border-zinc-300'
+          }`}
+        >
+          <video ref={videoElementRef} className="hidden" playsInline muted autoPlay />
 
-        {/* Compact viewport: max-h-[42vh] and h-[260px] to h-[360px] */}
-        <div className="relative w-full h-[260px] sm:h-[320px] md:h-[360px] max-h-[44vh] flex items-center justify-center overflow-hidden bg-black">
-          {cameraError ? (
-            <div className="flex flex-col items-center justify-center p-6 text-center max-w-md bg-zinc-900/90 rounded-2xl m-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-3">
-                <AlertCircle className="w-7 h-7" />
+          <div className="relative w-full h-[280px] sm:h-[340px] lg:h-[390px] flex items-center justify-center overflow-hidden bg-black">
+            {cameraError ? (
+              <div className="flex flex-col items-center justify-center p-6 text-center max-w-md bg-zinc-900/90 rounded-2xl m-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-3">
+                  <AlertCircle className="w-7 h-7" />
+                </div>
+                <h3 className="text-sm font-bold text-white mb-1.5">Camera Access Required</h3>
+                <p className="text-xs text-zinc-400 mb-4 leading-relaxed">{cameraError}</p>
+                <button
+                  type="button"
+                  onClick={() => startCamera(selectedDeviceId)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs shadow-lg hover:bg-emerald-400 transition"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Retry Camera Access
+                </button>
               </div>
-              <h3 className="text-sm font-bold text-white mb-1.5">Camera Access Required</h3>
-              <p className="text-xs text-zinc-400 mb-4 leading-relaxed">{cameraError}</p>
-              <button
-                type="button"
-                onClick={() => startCamera(selectedDeviceId)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs shadow-lg hover:bg-emerald-400 transition"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Retry Camera Access
-              </button>
-            </div>
-          ) : (
-            <canvas ref={canvasRef} className="max-h-full max-w-full object-contain mx-auto" />
-          )}
+            ) : (
+              <canvas ref={canvasRef} className="max-h-full max-w-full object-contain mx-auto" />
+            )}
 
-          {/* Camera Scanner Reticle */}
-          {cameraScannerActive && !isRecording && (
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="w-56 h-32 border-2 border-dashed border-amber-400/90 rounded-xl bg-amber-500/5 flex flex-col items-center justify-between p-2 shadow-2xl backdrop-blur-[1px]">
-                <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
-                  Scan Barcode Here
-                </span>
-                <div className="w-full h-0.5 bg-amber-400 shadow-lg animate-pulse" />
-                <span className="text-[10px] text-amber-300/80">Reading camera feed...</span>
+            {/* Camera Scanner Reticle */}
+            {cameraScannerActive && !isRecording && (
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="w-56 h-32 border-2 border-dashed border-amber-400/90 rounded-xl bg-amber-500/5 flex flex-col items-center justify-between p-2 shadow-2xl backdrop-blur-[1px]">
+                  <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
+                    Scan Barcode Here
+                  </span>
+                  <div className="w-full h-0.5 bg-amber-400 shadow-lg animate-pulse" />
+                  <span className="text-[10px] text-amber-300/80">Reading camera feed...</span>
+                </div>
+              </div>
+            )}
+
+            {/* Top Overlays on Camera */}
+            <div className="absolute top-2.5 left-3 right-3 flex items-center justify-between pointer-events-auto">
+              <div className="flex items-center gap-2">
+                {isRecording ? (
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/95 text-white shadow-lg animate-pulse border border-rose-400/30 text-xs font-bold font-mono">
+                    <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                    <span>REC: {activeBarcode}</span>
+                    <span className="bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
+                      {String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:
+                      {String(recordingSeconds % 60).padStart(2, '0')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-xs">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span>Live Camera</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Camera & Audio Selectors */}
+              <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs text-white">
+                {cameraDevices.length > 1 && (
+                  <select
+                    value={selectedDeviceId}
+                    onChange={handleDeviceChange}
+                    disabled={isRecording}
+                    className="bg-transparent text-white border-none px-2 py-0.5 focus:outline-none text-xs font-medium cursor-pointer"
+                  >
+                    {cameraDevices.map((dev, idx) => (
+                      <option key={dev.deviceId} value={dev.deviceId} className="bg-zinc-900 text-white">
+                        {dev.label || `Camera ${idx + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setAudioEnabled(!audioEnabled)}
+                  disabled={isRecording}
+                  className="p-1 rounded-lg text-white hover:text-emerald-400 transition"
+                  title={audioEnabled ? 'Audio Mic ON' : 'Audio Mic Muted'}
+                >
+                  {audioEnabled ? <Mic className="w-3.5 h-3.5 text-emerald-400" /> : <MicOff className="w-3.5 h-3.5 text-zinc-400" />}
+                </button>
               </div>
             </div>
-          )}
 
-          {/* Top Overlays */}
-          <div className="absolute top-2.5 left-3 right-3 flex items-center justify-between pointer-events-auto">
-            <div className="flex items-center gap-2">
-              {isRecording ? (
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/95 text-white shadow-lg animate-pulse border border-rose-400/30 text-xs font-bold font-mono">
-                  <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-                  <span>REC: {activeBarcode}</span>
-                  <span className="bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
-                    {String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:
-                    {String(recordingSeconds % 60).padStart(2, '0')}
+            {/* Quick Stop overlay on video */}
+            {isRecording && (
+              <div className="absolute bottom-3 inset-x-4 flex justify-center pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs sm:text-sm shadow-2xl shadow-rose-600/50 border-2 border-rose-300 transition hover:scale-105 active:scale-95 animate-pulse"
+                >
+                  <Square className="w-4 h-4 fill-current" />
+                  <span>STOP & SAVE ({activeBarcode})</span>
+                  <span className="text-[10px] font-mono bg-black/40 px-1.5 py-0.5 rounded">
+                    [Space]
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Compact Barcode Scanner Station Panel (lg:col-span-4) */}
+        <div
+          className={`lg:col-span-4 rounded-2xl border p-4 shadow-lg flex flex-col justify-between transition-colors ${
+            isDark
+              ? 'bg-zinc-900/90 border-zinc-800 text-white'
+              : 'bg-white border-zinc-200 text-zinc-900 shadow-zinc-200/50'
+          }`}
+        >
+          <div className="space-y-3.5">
+            {/* Header Status */}
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-700/40">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+                    isDark
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                  }`}
+                >
+                  <Scan className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold leading-tight">Barcode Scanner</h3>
+                  <span className="text-[11px] text-emerald-500 flex items-center gap-1 font-medium">
+                    <CheckCircle2 className="w-3 h-3" /> Scanner Gun Ready
                   </span>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span>Live Camera</span>
-                </div>
-              )}
-            </div>
+              </div>
 
-            {/* Camera & Audio Selectors */}
-            <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs text-white">
-              {cameraDevices.length > 1 && (
-                <select
-                  value={selectedDeviceId}
-                  onChange={handleDeviceChange}
-                  disabled={isRecording}
-                  className="bg-transparent text-white border-none px-2 py-0.5 focus:outline-none text-xs font-medium cursor-pointer"
-                >
-                  {cameraDevices.map((dev, idx) => (
-                    <option key={dev.deviceId} value={dev.deviceId} className="bg-zinc-900 text-white">
-                      {dev.label || `Camera ${idx + 1}`}
-                    </option>
-                  ))}
-                </select>
-              )}
-
+              {/* Camera Scanner Toggle Button */}
               <button
                 type="button"
-                onClick={() => setAudioEnabled(!audioEnabled)}
-                disabled={isRecording}
-                className="p-1 rounded-lg text-white hover:text-emerald-400 transition"
-                title={audioEnabled ? 'Audio Mic ON' : 'Audio Mic Muted'}
+                onClick={() => setCameraScannerActive(!cameraScannerActive)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                  cameraScannerActive
+                    ? isDark
+                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                      : 'bg-amber-50 border-amber-300 text-amber-800'
+                    : isDark
+                    ? 'bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:text-white'
+                    : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:bg-zinc-200'
+                }`}
+                title="Toggle Camera Barcode Scanner"
               >
-                {audioEnabled ? <Mic className="w-3.5 h-3.5 text-emerald-400" /> : <MicOff className="w-3.5 h-3.5 text-zinc-400" />}
+                <Camera className={`w-3.5 h-3.5 ${cameraScannerActive ? 'animate-pulse text-amber-500' : ''}`} />
+                <span>{cameraScannerActive ? 'Active' : 'Camera Scan'}</span>
               </button>
             </div>
+
+            {/* Instruction */}
+            <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+              Scan parcel barcode with USB scanner gun, or enter code below:
+            </p>
+
+            {/* Compact Barcode Form (No longer a huge stretched full-width bar!) */}
+            <form onSubmit={handleManualSubmit} className="space-y-2">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                  <Scan className="w-4 h-4" />
+                </div>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value)}
+                  disabled={isRecording}
+                  placeholder={isRecording ? 'Recording active...' : 'Enter or scan barcode...'}
+                  className={`barcode-scanner-target w-full rounded-xl pl-9 pr-14 py-2.5 text-xs sm:text-sm font-mono transition focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-60 ${
+                    isDark
+                      ? 'bg-zinc-950 border border-zinc-700 text-white placeholder-zinc-500'
+                      : 'bg-zinc-50 border border-zinc-300 text-zinc-900 placeholder-zinc-400'
+                  }`}
+                />
+                {barcodeInput && (
+                  <button
+                    type="button"
+                    onClick={() => setBarcodeInput('')}
+                    className={`absolute inset-y-0 right-0 pr-3 flex items-center text-xs ${
+                      isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
+                    }`}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Action Button: Start Record or STOP */}
+              {isRecording ? (
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="w-full py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition animate-pulse"
+                >
+                  <Square className="w-4 h-4 fill-current" />
+                  <span>STOP & SAVE ({activeBarcode})</span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!barcodeInput.trim()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Start Recording</span>
+                </button>
+              )}
+            </form>
           </div>
 
-          {/* STOP BUTTON OVERLAY */}
-          {isRecording && (
-            <div className="absolute bottom-3 inset-x-4 flex justify-center pointer-events-auto">
-              <button
-                type="button"
-                onClick={stopRecording}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm shadow-2xl shadow-rose-600/50 border-2 border-rose-300 transition hover:scale-105 active:scale-95 animate-pulse"
-              >
-                <Square className="w-4 h-4 fill-current" />
-                <span>STOP & SAVE ({activeBarcode})</span>
-                <span className="text-[11px] font-mono bg-black/40 px-2 py-0.5 rounded">
-                  [Space]
-                </span>
-              </button>
-            </div>
-          )}
+          {/* Quick Info Footer in Sidebar */}
+          <div
+            className={`mt-4 pt-3 border-t text-[11px] flex items-center justify-between ${
+              isDark ? 'border-zinc-800 text-zinc-400' : 'border-zinc-200 text-zinc-500'
+            }`}
+          >
+            <span>Auto-Save Mode:</span>
+            <span className="font-mono text-emerald-500 font-semibold">[Barcode].webm</span>
+          </div>
         </div>
       </div>
-
-      {/* Barcode Input Bar (Directly visible on screen without scrolling) */}
-      <ManualBarcodeInput
-        theme={theme}
-        onScanAndStart={startRecording}
-        isRecording={isRecording}
-        cameraScannerActive={cameraScannerActive}
-        onToggleCameraScanner={() => setCameraScannerActive(!cameraScannerActive)}
-      />
     </div>
   );
 };
