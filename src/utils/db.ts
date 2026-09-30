@@ -43,22 +43,9 @@ export async function getAllVideos(): Promise<RecordedVideo[]> {
     const request = index.getAll();
 
     request.onsuccess = () => {
-      // Sort newest first
       const results = (request.result as RecordedVideo[]).reverse();
       resolve(results);
     };
-    request.onerror = () => reject(request.error);
-  });
-}
-
-export async function getVideoById(id: string): Promise<RecordedVideo | null> {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.get(id);
-
-    request.onsuccess = () => resolve(request.result || null);
     request.onerror = () => reject(request.error);
   });
 }
@@ -85,15 +72,4 @@ export async function clearAllVideos(): Promise<void> {
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
-}
-
-export async function getStorageStats(): Promise<{ count: number; totalBytes: number }> {
-  try {
-    const videos = await getAllVideos();
-    const count = videos.length;
-    const totalBytes = videos.reduce((acc, curr) => acc + (curr.fileSize || curr.blob?.size || 0), 0);
-    return { count, totalBytes };
-  } catch {
-    return { count: 0, totalBytes: 0 };
-  }
 }

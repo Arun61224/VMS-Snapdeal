@@ -1,7 +1,6 @@
 {
   "name": "ScanVMS - Barcode Packaging Video Management System",
-  "description": "Industrial packaging and dispatch Video Management System with barcode scan auto-recording, customizable burnt-in timestamp, live preview, and video management.",
+  "description": "Industrial packaging Video Management System with barcode scan auto-recording, customizable burnt-in timestamp, dark/light modes, live preview, and video archive.",
   "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
-

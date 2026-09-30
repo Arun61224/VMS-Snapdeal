@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TimestampConfig, AppSettings, RecordedVideo } from './types';
 import { Header } from './components/Header';
 import { LiveRecorder } from './components/LiveRecorder';
@@ -6,8 +6,7 @@ import { VideoArchive } from './components/VideoArchive';
 import { TimestampEditorModal } from './components/TimestampEditorModal';
 import { VideoPlayerModal } from './components/VideoPlayerModal';
 import { getAllVideos, saveVideo, deleteVideo, clearAllVideos } from './utils/db';
-import { seedInitialSampleIfEmpty } from './utils/sampleData';
-import { ShieldCheck, Barcode, Video, Clock, HelpCircle, Download, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, HelpCircle } from 'lucide-react';
 
 const DEFAULT_TIMESTAMP_CONFIG: TimestampConfig = {
   mode: 'realtime',
@@ -17,27 +16,22 @@ const DEFAULT_TIMESTAMP_CONFIG: TimestampConfig = {
   timeFormat: '24h',
   showSeconds: true,
   showMilliseconds: true,
-  stationText: 'PACKING STATION-01',
-  operatorName: 'Amit',
   position: 'top-left',
   fontSize: 20,
   textColor: '#00ff66',
   bgColor: 'rgba(0,0,0,0.65)',
-  showBarcodeWatermark: true,
   showRecBlinker: true,
 };
 
 const DEFAULT_APP_SETTINGS: AppSettings = {
-  autoDownloadOnStop: true, // Download with barcode name immediately upon stopping
+  theme: 'dark',
+  autoDownloadOnStop: true,
   scannerBeep: true,
   selectedCameraId: '',
   audioEnabled: true,
-  videoQuality: '1080p',
-  filenameTemplate: 'barcode_only', // user requested barcode number filename e.g. SDLC1078691604.webm
 };
 
 export default function App() {
-  // Config states
   const [timestampConfig, setTimestampConfig] = useState<TimestampConfig>(() => {
     try {
       const saved = localStorage.getItem('scanvms_timestamp_config');
@@ -56,13 +50,14 @@ export default function App() {
     }
   });
 
-  // Data states
   const [videos, setVideos] = useState<RecordedVideo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<RecordedVideo | null>(null);
   const [isTimestampModalOpen, setIsTimestampModalOpen] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
 
-  // Save config to localStorage
+  const theme = appSettings.theme || 'dark';
+  const isDark = theme === 'dark';
+
   useEffect(() => {
     try {
       localStorage.setItem('scanvms_timestamp_config', JSON.stringify(timestampConfig));
@@ -79,12 +74,12 @@ export default function App() {
     }
   }, [appSettings]);
 
-  // Load videos from DB on mount
+  // Load videos on mount
   useEffect(() => {
     async function loadData() {
       try {
-        const initial = await seedInitialSampleIfEmpty();
-        setVideos(initial);
+        const stored = await getAllVideos();
+        setVideos(stored);
       } catch (err) {
         console.error('Error loading videos:', err);
       }
@@ -92,7 +87,6 @@ export default function App() {
     loadData();
   }, []);
 
-  // Handlers
   const handleVideoRecorded = async (newVideo: RecordedVideo) => {
     try {
       await saveVideo(newVideo);
@@ -143,8 +137,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-black">
-      {/* Top Navigation Bar */}
+    <div
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-200 selection:bg-emerald-500 selection:text-black ${
+        isDark ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'
+      }`}
+    >
+      {/* Header with Dark / Light Switcher */}
       <Header
         timestampConfig={timestampConfig}
         appSettings={appSettings}
@@ -153,25 +151,41 @@ export default function App() {
         totalSavedVideos={videos.length}
       />
 
-      {/* Main Content Area */}
+      {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Quick Instructions & Workflow Banner */}
-        <div className="bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Info Banner */}
+        <div
+          className={`border rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+            isDark
+              ? 'bg-zinc-900/80 border-zinc-800 text-zinc-200'
+              : 'bg-white border-zinc-200 text-zinc-800'
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                isDark
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+              }`}
+            >
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                  Automated Packaging VMS Workflow
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
+                  Barcode Auto-Recording VMS
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
-                  Ready for Scanner Gun
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                    isDark ? 'bg-zinc-800 border-zinc-700 text-zinc-400' : 'bg-zinc-100 border-zinc-300 text-zinc-600'
+                  }`}
+                >
+                  Scanner Gun Active
                 </span>
               </div>
-              <p className="text-xs text-zinc-300 mt-0.5">
-                Scan any parcel barcode (Gun or Camera) to <strong>Auto-Record</strong> with burnt-in timestamp proof &rarr; Click <strong>STOP</strong> to save with barcode file name.
+              <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                Barcode scan karte hi recording start ho jayegi &rarr; <strong>STOP</strong> dabane se barcode number ke naam se video save ho jayegi.
               </p>
             </div>
           </div>
@@ -179,51 +193,51 @@ export default function App() {
           <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
             <button
               onClick={() => setShowHowItWorks(!showHowItWorks)}
-              className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-zinc-800 transition"
+              className={`text-xs flex items-center gap-1 px-3 py-1.5 rounded-xl transition ${
+                isDark ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200'
+              }`}
             >
-              <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{showHowItWorks ? 'Hide Guide' : 'How it works'}</span>
+              <HelpCircle className="w-3.5 h-3.5 text-emerald-500" />
+              <span>{showHowItWorks ? 'Hide Guide' : 'Guide'}</span>
             </button>
           </div>
         </div>
 
-        {/* Collapsible How It Works Guide */}
+        {/* Collapsible Guide */}
         {showHowItWorks && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 animate-in fade-in">
-            <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-1">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center mb-1">1</span>
-              <h4 className="text-xs font-bold text-white">Barcode Scan</h4>
-              <p className="text-[11px] text-zinc-400">
-                Point any USB/Bluetooth barcode scanner gun or camera at the parcel label. Recording triggers instantly.
+          <div
+            className={`grid grid-cols-1 md:grid-cols-3 gap-3 border rounded-2xl p-4 animate-in fade-in ${
+              isDark ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'
+            }`}
+          >
+            <div className={`p-3 rounded-xl border ${isDark ? 'bg-zinc-950/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 font-bold text-xs flex items-center justify-center mb-1">1</span>
+              <h4 className="text-xs font-bold">1. Barcode Scan</h4>
+              <p className="text-[11px] opacity-70 mt-1">
+                USB/Bluetooth scanner gun se barcode scan karein ya manually enter karein. Recording turant start ho jayegi.
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-1">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center mb-1">2</span>
-              <h4 className="text-xs font-bold text-white">Burnt-in Timestamp</h4>
-              <p className="text-[11px] text-zinc-400">
-                Live date, time, station tag & barcode are physically watermarked onto the video frames for undisputed dispute proof.
+            <div className={`p-3 rounded-xl border ${isDark ? 'bg-zinc-950/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 font-bold text-xs flex items-center justify-center mb-1">2</span>
+              <h4 className="text-xs font-bold">2. Burnt-in Date & Time</h4>
+              <p className="text-[11px] opacity-70 mt-1">
+                Video frames par clear timestamp aur date stamp burn ho jata hai jisse proof verifiable rehta hai.
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-1">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center mb-1">3</span>
-              <h4 className="text-xs font-bold text-white">Stop Button</h4>
-              <p className="text-[11px] text-zinc-400">
-                Hit the red STOP button (or Spacebar). The video stops and names itself exactly as the scanned Barcode number.
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-1">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center mb-1">4</span>
-              <h4 className="text-xs font-bold text-white">Edit & Archive</h4>
-              <p className="text-[11px] text-zinc-400">
-                Change timestamp date, time, colors, or station in &apos;Edit Timestamp&apos;. Review, search, and download past videos below.
+            <div className={`p-3 rounded-xl border ${isDark ? 'bg-zinc-950/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 font-bold text-xs flex items-center justify-center mb-1">3</span>
+              <h4 className="text-xs font-bold">3. STOP & Barcode File Save</h4>
+              <p className="text-[11px] opacity-70 mt-1">
+                Lal STOP button (ya Spacebar) dabayein. Video barcode number ke naam se save aur auto-download ho jayegi.
               </p>
             </div>
           </div>
         )}
 
-        {/* Live Camera Recorder & Barcode Gun Trigger */}
-        <section aria-label="Live Recording Section">
+        {/* Live Camera Recorder */}
+        <section aria-label="Live Camera and Recorder">
           <LiveRecorder
+            theme={theme}
             timestampConfig={timestampConfig}
             appSettings={appSettings}
             onVideoRecorded={handleVideoRecorded}
@@ -231,9 +245,10 @@ export default function App() {
           />
         </section>
 
-        {/* Video Archive & Searchable History List */}
-        <section aria-label="Saved Videos Archive Section" className="pt-2">
+        {/* Saved Videos Archive */}
+        <section aria-label="Saved Recordings Archive" className="pt-2">
           <VideoArchive
+            theme={theme}
             videos={videos}
             onSelectVideo={(v) => setSelectedVideo(v)}
             onDeleteVideo={handleDeleteVideo}
@@ -243,16 +258,18 @@ export default function App() {
         </section>
       </main>
 
-      {/* Timestamp Customization Modal */}
+      {/* Timestamp Editor Modal */}
       <TimestampEditorModal
+        theme={theme}
         isOpen={isTimestampModalOpen}
         onClose={() => setIsTimestampModalOpen(false)}
         config={timestampConfig}
         onSave={(newCfg) => setTimestampConfig(newCfg)}
       />
 
-      {/* Video Playback & Review Modal */}
+      {/* Video Player Modal */}
       <VideoPlayerModal
+        theme={theme}
         video={selectedVideo}
         isOpen={Boolean(selectedVideo)}
         onClose={() => setSelectedVideo(null)}

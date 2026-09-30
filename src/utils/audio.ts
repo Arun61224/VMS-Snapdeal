@@ -1,5 +1,3 @@
-// Web Audio API synthesized sound effects for industrial scanner and VMS operations
-
 let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
@@ -24,15 +22,15 @@ export function playBarcodeBeep(): void {
     const gain = ctx.createGain();
     
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(2400, ctx.currentTime); // Standard barcode scanner beep frequency
+    osc.frequency.setValueAtTime(2400, ctx.currentTime);
     gain.gain.setValueAtTime(0.25, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.09);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
     
     osc.connect(gain);
     gain.connect(ctx.destination);
     
     osc.start();
-    osc.stop(ctx.currentTime + 0.09);
+    osc.stop(ctx.currentTime + 0.08);
   } catch (e) {
     console.warn('Audio playback not permitted or failed', e);
   }
@@ -46,7 +44,7 @@ export function playRecordStartSound(): void {
     
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
-    osc1.frequency.setValueAtTime(880, now); // A5
+    osc1.frequency.setValueAtTime(880, now);
     gain1.gain.setValueAtTime(0.2, now);
     gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
     osc1.connect(gain1);
@@ -56,13 +54,13 @@ export function playRecordStartSound(): void {
 
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
-    osc2.frequency.setValueAtTime(1320, now + 0.12); // E6
-    gain2.gain.setValueAtTime(0.25, now + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+    osc2.frequency.setValueAtTime(1320, now + 0.11);
+    gain2.gain.setValueAtTime(0.25, now + 0.11);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
-    osc2.start(now + 0.12);
-    osc2.stop(now + 0.28);
+    osc2.start(now + 0.11);
+    osc2.stop(now + 0.25);
   } catch (e) {
     console.warn('Audio start sound failed', e);
   }
@@ -76,16 +74,16 @@ export function playRecordStopSound(): void {
     
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.frequency.setValueAtTime(659.25, now); // E5
-    osc.frequency.exponentialRampToValueAtTime(440, now + 0.2); // A4
+    osc.frequency.setValueAtTime(659.25, now);
+    osc.frequency.exponentialRampToValueAtTime(440, now + 0.18);
     gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
     
     osc.connect(gain);
     gain.connect(ctx.destination);
     
     osc.start(now);
-    osc.stop(now + 0.22);
+    osc.stop(now + 0.2);
   } catch (e) {
     console.warn('Audio stop sound failed', e);
   }

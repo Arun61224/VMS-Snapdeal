@@ -8,7 +8,6 @@ export interface RecordedVideo {
   fileSize: number; // in bytes
   createdAt: string; // ISO string
   timestampConfigSnapshot?: TimestampConfig;
-  stationName?: string;
   notes?: string;
 }
 
@@ -20,21 +19,17 @@ export interface TimestampConfig {
   timeFormat: '24h' | '12h';
   showSeconds: boolean;
   showMilliseconds: boolean;
-  stationText: string;
-  operatorName: string;
   position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  fontSize: number; // e.g. 18, 24, 32
-  textColor: string; // '#ffffff', '#00ff66', '#ffff00', '#00e5ff'
+  fontSize: number; // e.g. 18, 22, 28
+  textColor: string; // '#00ff66', '#ffffff', '#ffff00', '#00e5ff'
   bgColor: string; // 'rgba(0,0,0,0.65)', 'transparent', '#000000'
-  showBarcodeWatermark: boolean;
   showRecBlinker: boolean;
 }
 
 export interface AppSettings {
+  theme: 'dark' | 'light';
   autoDownloadOnStop: boolean;
   scannerBeep: boolean;
   selectedCameraId: string;
   audioEnabled: boolean;
-  videoQuality: '720p' | '1080p';
-  filenameTemplate: 'barcode_only' | 'barcode_timestamp' | 'station_barcode_date';
 }

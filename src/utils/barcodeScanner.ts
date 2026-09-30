@@ -1,5 +1,3 @@
-import { BrowserMultiFormatReader } from '@zxing/browser';
-
 export interface BarcodeScanListenerOptions {
   onScan: (barcode: string) => void;
   minChars?: number;
@@ -8,18 +6,16 @@ export interface BarcodeScanListenerOptions {
 
 /**
  * Attaches a global keyboard listener for USB / Bluetooth hardware barcode scanner guns.
- * Barcode scanner guns emit keystrokes quickly followed by 'Enter'.
+ * Barcode guns type rapid key events followed by 'Enter'.
  */
 export function setupHardwareBarcodeScanner(options: BarcodeScanListenerOptions): () => void {
-  const { onScan, minChars = 3, maxIntervalMs = 50 } = options;
+  const { onScan, minChars = 3, maxIntervalMs = 60 } = options;
   let buffer = '';
   let lastKeyTime = 0;
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    // Ignore function keys, control combinations, etc.
     if (e.ctrlKey || e.altKey || e.metaKey) return;
 
-    // Check if user is typing into an input field or textarea that is not specifically the scanner input
     const target = e.target as HTMLElement | null;
     const isEditingText =
       target &&
@@ -32,7 +28,6 @@ export function setupHardwareBarcodeScanner(options: BarcodeScanListenerOptions)
 
     if (e.key === 'Enter') {
       const code = buffer.trim();
-      // If we accumulated characters quickly, or we have a valid buffered barcode
       if (code.length >= minChars) {
         e.preventDefault();
         onScan(code);
@@ -42,7 +37,6 @@ export function setupHardwareBarcodeScanner(options: BarcodeScanListenerOptions)
     }
 
     if (e.key.length === 1) {
-      // If time between keystrokes was too long, reset the buffer (unless it was the first key)
       if (buffer.length > 0 && interval > maxIntervalMs && !isEditingText) {
         buffer = '';
       }
@@ -60,19 +54,23 @@ export function setupHardwareBarcodeScanner(options: BarcodeScanListenerOptions)
 }
 
 /**
- * Helper to decode barcode from HTMLVideoElement or HTMLCanvasElement using ZXing
+ * Native BarcodeDetector for live camera detection
  */
 export class CameraBarcodeScanner {
-  private reader: BrowserMultiFormatReader | null = null;
-  private controls: { stop: () => void } | null = null;
   private isScanning = false;
   private scanIntervalTimer: number | null = null;
+  private detector: any = null;
 
   constructor() {
-    try {
-      this.reader = new BrowserMultiFormatReader();
-    } catch (e) {
-      console.warn('Failed to initialize ZXing reader:', e);
+    if ('BarcodeDetector' in window) {
+      try {
+        // @ts-ignore
+        this.detector = new window.BarcodeDetector({
+          formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'qr_code', 'upc_a', 'upc_e', 'itf']
+        });
+      } catch (err) {
+        console.warn('BarcodeDetector format init notice:', err);
+      }
     }
   }
 
@@ -84,26 +82,12 @@ export class CameraBarcodeScanner {
     if (this.isScanning) return;
     this.isScanning = true;
 
-    // Native BarcodeDetector check if supported in Chromium
-    const hasNativeBarcodeDetector = 'BarcodeDetector' in window;
-    let nativeDetector: any = null;
+    this.scanIntervalTimer = window.setInterval(async () => {
+      if (!this.isScanning || !videoElement || videoElement.readyState < 2) return;
 
-    if (hasNativeBarcodeDetector) {
-      try {
-        // @ts-ignore
-        nativeDetector = new window.BarcodeDetector({
-          formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'qr_code', 'upc_a', 'upc_e', 'itf']
-        });
-      } catch (err) {
-        console.warn('Native BarcodeDetector init failed', err);
-      }
-    }
-
-    if (nativeDetector) {
-      this.scanIntervalTimer = window.setInterval(async () => {
-        if (!this.isScanning || !videoElement || videoElement.readyState < 2) return;
+      if (this.detector) {
         try {
-          const barcodes = await nativeDetector.detect(videoElement);
+          const barcodes = await this.detector.detect(videoElement);
           if (barcodes && barcodes.length > 0) {
             const raw = barcodes[0].rawValue;
             if (raw && raw.trim()) {
@@ -111,27 +95,10 @@ export class CameraBarcodeScanner {
             }
           }
         } catch {
-          // ignore detection frame drops
+          // ignore transient detection drops
         }
-      }, intervalMs);
-    } else if (this.reader) {
-      try {
-        this.controls = this.reader.decodeFromVideoElement(
-          videoElement,
-          (result, _error) => {
-            if (!this.isScanning) return;
-            if (result) {
-              const text = result.getText();
-              if (text && text.trim()) {
-                onDetected(text.trim());
-              }
-            }
-          }
-        );
-      } catch (e) {
-        console.warn('Error starting ZXing video scanner:', e);
       }
-    }
+    }, intervalMs);
   }
 
   public stopScan(): void {
@@ -139,14 +106,6 @@ export class CameraBarcodeScanner {
     if (this.scanIntervalTimer) {
       clearInterval(this.scanIntervalTimer);
       this.scanIntervalTimer = null;
-    }
-    if (this.controls) {
-      try {
-        this.controls.stop();
-      } catch {
-        // ignore
-      }
-      this.controls = null;
     }
   }
 }

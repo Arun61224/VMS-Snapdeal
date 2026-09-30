@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { RecordedVideo } from '../types';
-import { X, Download, Trash2, Play, Pause, RotateCcw, Volume2, VolumeX, Maximize2, Tag, Calendar, Clock, HardDrive } from 'lucide-react';
+import { X, Download, Trash2, Play, Pause, RotateCcw, Volume2, VolumeX, Tag, Calendar, Clock, HardDrive } from 'lucide-react';
 
 interface VideoPlayerModalProps {
+  theme: 'dark' | 'light';
   video: RecordedVideo | null;
   isOpen: boolean;
   onClose: () => void;
@@ -11,6 +12,7 @@ interface VideoPlayerModalProps {
 }
 
 export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
+  theme,
   video,
   isOpen,
   onClose,
@@ -38,6 +40,8 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   }, [video]);
 
   if (!isOpen || !video) return null;
+
+  const isDark = theme === 'dark';
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -88,36 +92,41 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden text-zinc-100">
+      <div
+        className={`border rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transition-colors ${
+          isDark ? 'bg-zinc-900 border-zinc-700 text-zinc-100' : 'bg-white border-zinc-300 text-zinc-900'
+        }`}
+      >
         {/* Top Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-950/80">
+        <div
+          className={`flex items-center justify-between px-5 py-3.5 border-b ${
+            isDark ? 'border-zinc-800 bg-zinc-950/80' : 'border-zinc-200 bg-zinc-50'
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
               <Tag className="w-4 h-4" />
             </span>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-base font-bold text-white tracking-wider">
-                  {video.barcode}
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">
-                  {video.stationName || 'Station 01'}
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-400">
-                Packaging Proof Recorded on {new Date(video.createdAt).toLocaleString()}
+              <span className="font-mono text-base font-bold tracking-wider">
+                {video.barcode}
+              </span>
+              <p className={`text-[11px] ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                Recorded on {new Date(video.createdAt).toLocaleString()}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition"
+            className={`p-2 rounded-lg transition ${
+              isDark ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+            }`}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Video Player Display */}
+        {/* Video Player Feed */}
         <div className="relative bg-black flex items-center justify-center min-h-[300px] max-h-[55vh] overflow-hidden group">
           {videoUrl ? (
             <video
@@ -137,25 +146,23 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               playsInline
             />
           ) : (
-            <div className="text-zinc-500 text-sm">Loading video stream...</div>
+            <div className="text-zinc-500 text-sm">Loading video...</div>
           )}
 
-          {/* Big Center Play Overlay */}
           {!isPlaying && videoUrl && (
             <button
               onClick={togglePlay}
-              className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-emerald-500/90 text-black flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
+              className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
             >
               <Play className="w-8 h-8 fill-current ml-1" />
             </button>
           )}
         </div>
 
-        {/* Player Controls Bar */}
-        <div className="p-4 bg-zinc-950 border-t border-zinc-800 space-y-3">
-          {/* Progress Slider */}
+        {/* Controls Bar */}
+        <div className={`p-4 border-t space-y-3 ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-zinc-400 min-w-10 text-right">
+            <span className={`text-xs font-mono min-w-10 text-right ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
               {formatSecs(currentTime)}
             </span>
             <input
@@ -165,19 +172,20 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               step="0.05"
               value={currentTime}
               onChange={handleSeek}
-              className="w-full accent-emerald-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+              className="w-full accent-emerald-500 h-1.5 rounded-lg cursor-pointer"
             />
-            <span className="text-xs font-mono text-zinc-400 min-w-10">
+            <span className={`text-xs font-mono min-w-10 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
               {formatSecs(duration || video.duration)}
             </span>
           </div>
 
-          {/* Buttons Row */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
             <div className="flex items-center gap-2">
               <button
                 onClick={togglePlay}
-                className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition"
+                className={`p-2 rounded-lg transition ${
+                  isDark ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-200 hover:bg-zinc-300 text-zinc-900'
+                }`}
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
@@ -189,7 +197,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                     videoRef.current.currentTime = 0;
                   }
                 }}
-                className="p-2 rounded-lg bg-zinc-800/60 hover:bg-zinc-700 text-zinc-300 transition"
+                className={`p-2 rounded-lg transition ${
+                  isDark ? 'bg-zinc-800/60 hover:bg-zinc-700 text-zinc-300' : 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
+                }`}
                 title="Restart"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -197,20 +207,21 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
               <button
                 onClick={() => setIsMuted(!isMuted)}
-                className="p-2 rounded-lg bg-zinc-800/60 hover:bg-zinc-700 text-zinc-300 transition"
+                className={`p-2 rounded-lg transition ${
+                  isDark ? 'bg-zinc-800/60 hover:bg-zinc-700 text-zinc-300' : 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
+                }`}
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
 
-              {/* Speed Switcher */}
-              <div className="flex items-center rounded-lg bg-zinc-800 p-0.5 text-xs text-zinc-300">
+              <div className={`flex items-center rounded-lg p-0.5 text-xs ${isDark ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>
                 {[0.5, 1, 1.5, 2].map((rate) => (
                   <button
                     key={rate}
                     onClick={() => changeRate(rate)}
                     className={`px-2 py-1 rounded transition ${
-                      playbackRate === rate ? 'bg-emerald-500 font-bold text-black' : 'hover:text-white'
+                      playbackRate === rate ? 'bg-emerald-500 font-bold text-black' : 'hover:text-zinc-900'
                     }`}
                   >
                     {rate}x
@@ -219,16 +230,15 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons: Download & Delete */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  if (confirm(`Are you sure you want to delete recording for barcode ${video.barcode}?`)) {
+                  if (confirm(`Delete recording for barcode ${video.barcode}?`)) {
                     onDelete(video.id);
                     onClose();
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 transition"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Delete
@@ -246,36 +256,40 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         </div>
 
         {/* Metadata Footer */}
-        <div className="px-5 py-3 bg-zinc-900 border-t border-zinc-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs text-zinc-400">
+        <div
+          className={`px-5 py-3 border-t grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs ${
+            isDark ? 'bg-zinc-900 border-zinc-800/80 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-600'
+          }`}
+        >
           <div className="flex items-center gap-2">
-            <Tag className="w-3.5 h-3.5 text-zinc-500" />
+            <Tag className="w-3.5 h-3.5 opacity-60" />
             <div>
-              <span className="block text-[10px] uppercase text-zinc-500">File Name</span>
-              <span className="font-mono text-zinc-200 truncate block max-w-[140px]">{video.title}</span>
+              <span className="block text-[10px] uppercase opacity-60">File</span>
+              <span className="font-mono font-semibold truncate block max-w-[140px]">{video.title}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-zinc-500" />
+            <Clock className="w-3.5 h-3.5 opacity-60" />
             <div>
-              <span className="block text-[10px] uppercase text-zinc-500">Duration</span>
-              <span className="text-zinc-200">{formatSecs(video.duration)}</span>
+              <span className="block text-[10px] uppercase opacity-60">Duration</span>
+              <span className="font-semibold">{formatSecs(video.duration)}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <HardDrive className="w-3.5 h-3.5 text-zinc-500" />
+            <HardDrive className="w-3.5 h-3.5 opacity-60" />
             <div>
-              <span className="block text-[10px] uppercase text-zinc-500">File Size</span>
-              <span className="text-zinc-200">{formattedSize(video.fileSize)}</span>
+              <span className="block text-[10px] uppercase opacity-60">File Size</span>
+              <span className="font-semibold">{formattedSize(video.fileSize)}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+            <Calendar className="w-3.5 h-3.5 opacity-60" />
             <div>
-              <span className="block text-[10px] uppercase text-zinc-500">Logged At</span>
-              <span className="text-zinc-200">{new Date(video.createdAt).toLocaleTimeString()}</span>
+              <span className="block text-[10px] uppercase opacity-60">Logged At</span>
+              <span className="font-semibold">{new Date(video.createdAt).toLocaleTimeString()}</span>
             </div>
           </div>
         </div>
