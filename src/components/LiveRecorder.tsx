@@ -5,7 +5,6 @@ import { CameraBarcodeScanner, setupHardwareBarcodeScanner } from '../utils/barc
 import { playBarcodeBeep, playRecordStartSound, playRecordStopSound } from '../utils/audio';
 import { ManualBarcodeInput } from './ManualBarcodeInput';
 import {
-  Camera,
   Square,
   AlertCircle,
   RefreshCw,
@@ -27,7 +26,6 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
   timestampConfig,
   appSettings,
   onVideoRecorded,
-  onOpenTimestampModal,
 }) => {
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -38,7 +36,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
 
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
-  const [cameraReady, setCameraReady] = useState<boolean>(false);
+  const [, setCameraReady] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
 
@@ -159,17 +157,14 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
             canvas.height = video.videoHeight || 720;
           }
 
-          // Draw the video frame
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-          // Compute current timestamp
           const currentDate = computeCurrentDateTime(
             timestampConfig,
             streamStartTimeRef.current,
             customStartMsRef.current
           );
 
-          // Burn in ONLY the date & timestamp onto canvas
           drawTimestampOnCanvas(
             ctx,
             canvas.width,
@@ -200,7 +195,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
 
     const canvas = canvasRef.current;
     if (!canvas) {
-      alert('Camera canvas not initialized yet.');
+      alert('Camera canvas is not ready yet.');
       return;
     }
 
@@ -307,7 +302,6 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
       }
     }
 
-    // Name file with barcode number
     const filename = `${barcode}.webm`;
 
     const newVideo: RecordedVideo = {
@@ -325,13 +319,12 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
     onVideoRecorded(newVideo);
     setActiveBarcode(null);
 
-    // Auto-download to PC immediately upon Stop
     if (appSettings.autoDownloadOnStop) {
       triggerDownload(videoBlob, filename);
     }
 
     setStatusNotification({
-      message: `Saved video: ${filename}`,
+      message: `Recording saved: ${filename}`,
       type: 'success',
     });
     setTimeout(() => setStatusNotification(null), 4000);
@@ -417,12 +410,12 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
   const isDark = theme === 'dark';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Toast Notification */}
       {statusNotification && (
         <div className="fixed top-16 right-4 z-50 animate-in fade-in slide-in-from-top-4">
           <div
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-2xl text-xs font-semibold ${
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border shadow-2xl text-xs font-semibold ${
               isDark ? 'bg-zinc-900 border-emerald-500/50 text-white' : 'bg-white border-emerald-500 text-zinc-900'
             }`}
           >
@@ -432,39 +425,40 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
         </div>
       )}
 
-      {/* Main Viewport */}
+      {/* Compact Live Camera Window (Restricted Height so Barcode Scanner is visible without scrolling) */}
       <div
-        className={`relative rounded-3xl border shadow-2xl overflow-hidden transition-colors ${
+        className={`relative rounded-2xl border shadow-lg overflow-hidden transition-colors ${
           isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-black border-zinc-300'
         }`}
       >
         <video ref={videoElementRef} className="hidden" playsInline muted autoPlay />
 
-        <div className="relative aspect-video w-full flex items-center justify-center overflow-hidden">
+        {/* Compact viewport: max-h-[42vh] and h-[260px] to h-[360px] */}
+        <div className="relative w-full h-[260px] sm:h-[320px] md:h-[360px] max-h-[44vh] flex items-center justify-center overflow-hidden bg-black">
           {cameraError ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center max-w-md bg-zinc-900/90 rounded-2xl m-4">
-              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-4">
-                <AlertCircle className="w-8 h-8" />
+            <div className="flex flex-col items-center justify-center p-6 text-center max-w-md bg-zinc-900/90 rounded-2xl m-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-3">
+                <AlertCircle className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Camera Access Required</h3>
-              <p className="text-xs text-zinc-400 mb-5 leading-relaxed">{cameraError}</p>
+              <h3 className="text-sm font-bold text-white mb-1.5">Camera Access Required</h3>
+              <p className="text-xs text-zinc-400 mb-4 leading-relaxed">{cameraError}</p>
               <button
                 type="button"
                 onClick={() => startCamera(selectedDeviceId)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 text-black font-bold text-xs shadow-lg hover:bg-emerald-400 transition"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs shadow-lg hover:bg-emerald-400 transition"
               >
-                <RefreshCw className="w-4 h-4" />
-                Retry Camera
+                <RefreshCw className="w-3.5 h-3.5" />
+                Retry Camera Access
               </button>
             </div>
           ) : (
-            <canvas ref={canvasRef} className="w-full h-full object-contain" />
+            <canvas ref={canvasRef} className="max-h-full max-w-full object-contain mx-auto" />
           )}
 
           {/* Camera Scanner Reticle */}
           {cameraScannerActive && !isRecording && (
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="w-64 h-36 border-2 border-dashed border-amber-400/90 rounded-2xl bg-amber-500/5 flex flex-col items-center justify-between p-2 shadow-2xl backdrop-blur-[1px]">
+              <div className="w-56 h-32 border-2 border-dashed border-amber-400/90 rounded-xl bg-amber-500/5 flex flex-col items-center justify-between p-2 shadow-2xl backdrop-blur-[1px]">
                 <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
                   Scan Barcode Here
                 </span>
@@ -475,10 +469,10 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
           )}
 
           {/* Top Overlays */}
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-auto">
+          <div className="absolute top-2.5 left-3 right-3 flex items-center justify-between pointer-events-auto">
             <div className="flex items-center gap-2">
               {isRecording ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-600/95 text-white shadow-lg animate-pulse border border-rose-400/30 text-xs font-bold font-mono">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/95 text-white shadow-lg animate-pulse border border-rose-400/30 text-xs font-bold font-mono">
                   <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
                   <span>REC: {activeBarcode}</span>
                   <span className="bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
@@ -487,7 +481,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-xs">
+                <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span>Live Camera</span>
                 </div>
@@ -495,13 +489,13 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
             </div>
 
             {/* Camera & Audio Selectors */}
-            <div className="flex items-center gap-2 bg-black/75 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs text-white">
+            <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs text-white">
               {cameraDevices.length > 1 && (
                 <select
                   value={selectedDeviceId}
                   onChange={handleDeviceChange}
                   disabled={isRecording}
-                  className="bg-transparent text-white border-none px-2 py-1 focus:outline-none text-xs font-medium cursor-pointer"
+                  className="bg-transparent text-white border-none px-2 py-0.5 focus:outline-none text-xs font-medium cursor-pointer"
                 >
                   {cameraDevices.map((dev, idx) => (
                     <option key={dev.deviceId} value={dev.deviceId} className="bg-zinc-900 text-white">
@@ -515,7 +509,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
                 type="button"
                 onClick={() => setAudioEnabled(!audioEnabled)}
                 disabled={isRecording}
-                className="p-1.5 rounded-lg text-white hover:text-emerald-400 transition"
+                className="p-1 rounded-lg text-white hover:text-emerald-400 transition"
                 title={audioEnabled ? 'Audio Mic ON' : 'Audio Mic Muted'}
               >
                 {audioEnabled ? <Mic className="w-3.5 h-3.5 text-emerald-400" /> : <MicOff className="w-3.5 h-3.5 text-zinc-400" />}
@@ -525,13 +519,13 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
 
           {/* STOP BUTTON OVERLAY */}
           {isRecording && (
-            <div className="absolute bottom-4 inset-x-4 flex justify-center pointer-events-auto">
+            <div className="absolute bottom-3 inset-x-4 flex justify-center pointer-events-auto">
               <button
                 type="button"
                 onClick={stopRecording}
-                className="flex items-center gap-2.5 px-8 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm shadow-2xl shadow-rose-600/50 border-2 border-rose-300 transition hover:scale-105 active:scale-95 animate-pulse"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm shadow-2xl shadow-rose-600/50 border-2 border-rose-300 transition hover:scale-105 active:scale-95 animate-pulse"
               >
-                <Square className="w-5 h-5 fill-current" />
+                <Square className="w-4 h-4 fill-current" />
                 <span>STOP & SAVE ({activeBarcode})</span>
                 <span className="text-[11px] font-mono bg-black/40 px-2 py-0.5 rounded">
                   [Space]
@@ -542,7 +536,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
         </div>
       </div>
 
-      {/* Barcode Input Bar (Clean without Quick Samples) */}
+      {/* Barcode Input Bar (Directly visible on screen without scrolling) */}
       <ManualBarcodeInput
         theme={theme}
         onScanAndStart={startRecording}
