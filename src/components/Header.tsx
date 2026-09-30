@@ -25,11 +25,11 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
-      className={`border-b sticky top-0 z-30 px-4 lg:px-8 py-3 backdrop-blur-md transition-colors ${
+      className={`border-b sticky top-0 z-30 px-4 sm:px-6 lg:px-8 py-3.5 backdrop-blur-md transition-colors ${
         isDark ? 'bg-zinc-950/90 border-zinc-800/80 text-white' : 'bg-white/90 border-zinc-200 text-zinc-900 shadow-sm'
       }`}
     >
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="max-w-[1720px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Branding */}
         <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
           <div className="flex items-center gap-3">

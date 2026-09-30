@@ -446,30 +446,30 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
         </div>
       )}
 
-      {/* SIDE-BY-SIDE WORKSPACE LAYOUT (Fills side empty space perfectly!) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+      {/* SIDE-BY-SIDE WORKSPACE LAYOUT (Matches 150% Zoom proportions at 100% default zoom) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         {/* Left Column: Live Camera Window (lg:col-span-8) */}
         <div
-          className={`lg:col-span-8 relative rounded-2xl border shadow-lg overflow-hidden flex flex-col justify-center transition-colors ${
+          className={`lg:col-span-8 relative rounded-2xl border shadow-xl overflow-hidden flex flex-col justify-center transition-colors ${
             isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-black border-zinc-300'
           }`}
         >
           <video ref={videoElementRef} className="hidden" playsInline muted autoPlay />
 
-          <div className="relative w-full h-[280px] sm:h-[340px] lg:h-[390px] flex items-center justify-center overflow-hidden bg-black">
+          <div className="relative w-full h-[360px] sm:h-[440px] lg:h-[500px] xl:h-[540px] flex items-center justify-center overflow-hidden bg-black">
             {cameraError ? (
-              <div className="flex flex-col items-center justify-center p-6 text-center max-w-md bg-zinc-900/90 rounded-2xl m-3">
-                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-3">
-                  <AlertCircle className="w-7 h-7" />
+              <div className="flex flex-col items-center justify-center p-8 text-center max-w-md bg-zinc-900/90 rounded-2xl m-4">
+                <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-4">
+                  <AlertCircle className="w-8 h-8" />
                 </div>
-                <h3 className="text-sm font-bold text-white mb-1.5">Camera Access Required</h3>
-                <p className="text-xs text-zinc-400 mb-4 leading-relaxed">{cameraError}</p>
+                <h3 className="text-base font-bold text-white mb-2">Camera Access Required</h3>
+                <p className="text-sm text-zinc-400 mb-5 leading-relaxed">{cameraError}</p>
                 <button
                   type="button"
                   onClick={() => startCamera(selectedDeviceId)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs shadow-lg hover:bg-emerald-400 transition"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 text-black font-bold text-sm shadow-lg hover:bg-emerald-400 transition"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
+                  <RefreshCw className="w-4 h-4" />
                   Retry Camera Access
                 </button>
               </div>
@@ -480,44 +480,44 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
             {/* Camera Scanner Reticle */}
             {cameraScannerActive && !isRecording && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="w-56 h-32 border-2 border-dashed border-amber-400/90 rounded-xl bg-amber-500/5 flex flex-col items-center justify-between p-2 shadow-2xl backdrop-blur-[1px]">
-                  <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
+                <div className="w-64 h-36 border-2 border-dashed border-amber-400/90 rounded-2xl bg-amber-500/5 flex flex-col items-center justify-between p-2 shadow-2xl backdrop-blur-[1px]">
+                  <span className="text-xs font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
                     Scan Barcode Here
                   </span>
                   <div className="w-full h-0.5 bg-amber-400 shadow-lg animate-pulse" />
-                  <span className="text-[10px] text-amber-300/80">Reading camera feed...</span>
+                  <span className="text-xs text-amber-300/80">Reading camera feed...</span>
                 </div>
               </div>
             )}
 
             {/* Top Overlays on Camera */}
-            <div className="absolute top-2.5 left-3 right-3 flex items-center justify-between pointer-events-auto">
+            <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-auto">
               <div className="flex items-center gap-2">
                 {isRecording ? (
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/95 text-white shadow-lg animate-pulse border border-rose-400/30 text-xs font-bold font-mono">
+                  <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-600/95 text-white shadow-lg animate-pulse border border-rose-400/30 text-xs sm:text-sm font-bold font-mono">
                     <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
                     <span>REC: {activeBarcode}</span>
-                    <span className="bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
+                    <span className="bg-black/30 px-2 py-0.5 rounded-full text-xs">
                       {String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:
                       {String(recordingSeconds % 60).padStart(2, '0')}
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-xs">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-xs sm:text-sm font-medium">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                     <span>Live Camera</span>
                   </div>
                 )}
               </div>
 
               {/* Camera & Audio Selectors */}
-              <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs text-white">
+              <div className="flex items-center gap-2 bg-black/75 backdrop-blur-md p-1.5 rounded-xl border border-white/10 text-xs sm:text-sm text-white">
                 {cameraDevices.length > 1 && (
                   <select
                     value={selectedDeviceId}
                     onChange={handleDeviceChange}
                     disabled={isRecording}
-                    className="bg-transparent text-white border-none px-2 py-0.5 focus:outline-none text-xs font-medium cursor-pointer"
+                    className="bg-transparent text-white border-none px-2 py-0.5 focus:outline-none text-xs sm:text-sm font-medium cursor-pointer"
                   >
                     {cameraDevices.map((dev, idx) => (
                       <option key={dev.deviceId} value={dev.deviceId} className="bg-zinc-900 text-white">
@@ -531,25 +531,25 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
                   type="button"
                   onClick={() => setAudioEnabled(!audioEnabled)}
                   disabled={isRecording}
-                  className="p-1 rounded-lg text-white hover:text-emerald-400 transition"
+                  className="p-1.5 rounded-lg text-white hover:text-emerald-400 transition"
                   title={audioEnabled ? 'Audio Mic ON' : 'Audio Mic Muted'}
                 >
-                  {audioEnabled ? <Mic className="w-3.5 h-3.5 text-emerald-400" /> : <MicOff className="w-3.5 h-3.5 text-zinc-400" />}
+                  {audioEnabled ? <Mic className="w-4 h-4 text-emerald-400" /> : <MicOff className="w-4 h-4 text-zinc-400" />}
                 </button>
               </div>
             </div>
 
             {/* Quick Stop overlay on video */}
             {isRecording && (
-              <div className="absolute bottom-3 inset-x-4 flex justify-center pointer-events-auto">
+              <div className="absolute bottom-4 inset-x-4 flex justify-center pointer-events-auto">
                 <button
                   type="button"
                   onClick={stopRecording}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs sm:text-sm shadow-2xl shadow-rose-600/50 border-2 border-rose-300 transition hover:scale-105 active:scale-95 animate-pulse"
+                  className="flex items-center gap-2.5 px-7 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm sm:text-base shadow-2xl shadow-rose-600/50 border-2 border-rose-300 transition hover:scale-105 active:scale-95 animate-pulse"
                 >
-                  <Square className="w-4 h-4 fill-current" />
+                  <Square className="w-5 h-5 fill-current" />
                   <span>STOP & SAVE ({activeBarcode})</span>
-                  <span className="text-[10px] font-mono bg-black/40 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-mono bg-black/40 px-2 py-0.5 rounded">
                     [Space]
                   </span>
                 </button>
@@ -558,31 +558,31 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Compact Barcode Scanner Station Panel (lg:col-span-4) */}
+        {/* Right Column: Prominent Barcode Scanner Station Panel (lg:col-span-4) */}
         <div
-          className={`lg:col-span-4 rounded-2xl border p-4 shadow-lg flex flex-col justify-between transition-colors ${
+          className={`lg:col-span-4 rounded-2xl border p-5 sm:p-6 lg:p-7 shadow-xl flex flex-col justify-between transition-colors ${
             isDark
               ? 'bg-zinc-900/90 border-zinc-800 text-white'
               : 'bg-white border-zinc-200 text-zinc-900 shadow-zinc-200/50'
           }`}
         >
-          <div className="space-y-3.5">
+          <div className="space-y-4 sm:space-y-5">
             {/* Header Status */}
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-700/40">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between pb-3.5 border-b border-zinc-700/40">
+              <div className="flex items-center gap-3">
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                     isDark
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                       : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                   }`}
                 >
-                  <Scan className="w-4 h-4" />
+                  <Scan className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold leading-tight">Barcode Scanner</h3>
-                  <span className="text-[11px] text-emerald-500 flex items-center gap-1 font-medium">
-                    <CheckCircle2 className="w-3 h-3" /> Scanner Gun Ready
+                  <h3 className="text-base sm:text-lg font-bold leading-tight">Barcode Scanner</h3>
+                  <span className="text-xs sm:text-sm text-emerald-500 flex items-center gap-1.5 font-medium mt-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Scanner Gun Ready
                   </span>
                 </div>
               </div>
@@ -591,7 +591,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
               <button
                 type="button"
                 onClick={() => setCameraScannerActive(!cameraScannerActive)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition ${
                   cameraScannerActive
                     ? isDark
                       ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
@@ -602,21 +602,21 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
                 }`}
                 title="Toggle Camera Barcode Scanner"
               >
-                <Camera className={`w-3.5 h-3.5 ${cameraScannerActive ? 'animate-pulse text-amber-500' : ''}`} />
+                <Camera className={`w-4 h-4 ${cameraScannerActive ? 'animate-pulse text-amber-500' : ''}`} />
                 <span>{cameraScannerActive ? 'Active' : 'Camera Scan'}</span>
               </button>
             </div>
 
             {/* Instruction */}
-            <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
               Scan parcel barcode with USB scanner gun, or enter code below:
             </p>
 
-            {/* Compact Barcode Form (No longer a huge stretched full-width bar!) */}
-            <form onSubmit={handleManualSubmit} className="space-y-2">
+            {/* Barcode Form */}
+            <form onSubmit={handleManualSubmit} className="space-y-3">
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
-                  <Scan className="w-4 h-4" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                  <Scan className="w-5 h-5" />
                 </div>
                 <input
                   ref={inputRef}
@@ -625,7 +625,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
                   onChange={(e) => setBarcodeInput(e.target.value)}
                   disabled={isRecording}
                   placeholder={isRecording ? 'Recording active...' : 'Enter or scan barcode...'}
-                  className={`barcode-scanner-target w-full rounded-xl pl-9 pr-14 py-2.5 text-xs sm:text-sm font-mono transition focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-60 ${
+                  className={`barcode-scanner-target w-full rounded-xl pl-11 pr-14 py-3 sm:py-3.5 text-sm sm:text-base font-mono transition focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-60 ${
                     isDark
                       ? 'bg-zinc-950 border border-zinc-700 text-white placeholder-zinc-500'
                       : 'bg-zinc-50 border border-zinc-300 text-zinc-900 placeholder-zinc-400'
@@ -635,7 +635,7 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
                   <button
                     type="button"
                     onClick={() => setBarcodeInput('')}
-                    className={`absolute inset-y-0 right-0 pr-3 flex items-center text-xs ${
+                    className={`absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs sm:text-sm ${
                       isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
                     }`}
                   >
@@ -649,18 +649,18 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
                 <button
                   type="button"
                   onClick={stopRecording}
-                  className="w-full py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition animate-pulse"
+                  className="w-full py-3.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition animate-pulse"
                 >
-                  <Square className="w-4 h-4 fill-current" />
+                  <Square className="w-5 h-5 fill-current" />
                   <span>STOP & SAVE ({activeBarcode})</span>
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={!barcodeInput.trim()}
-                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition"
+                  className="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer"
                 >
-                  <Play className="w-4 h-4 fill-current" />
+                  <Play className="w-5 h-5 fill-current" />
                   <span>Start Recording</span>
                 </button>
               )}
@@ -669,12 +669,12 @@ export const LiveRecorder: React.FC<LiveRecorderProps> = ({
 
           {/* Quick Info Footer in Sidebar */}
           <div
-            className={`mt-4 pt-3 border-t text-[11px] flex items-center justify-between ${
+            className={`mt-6 pt-4 border-t text-xs sm:text-sm flex items-center justify-between ${
               isDark ? 'border-zinc-800 text-zinc-400' : 'border-zinc-200 text-zinc-500'
             }`}
           >
             <span>Auto-Save Mode:</span>
-            <span className="font-mono text-emerald-500 font-semibold">[Barcode].webm</span>
+            <span className="font-mono text-emerald-500 font-bold">[Barcode].webm</span>
           </div>
         </div>
       </div>

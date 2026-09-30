@@ -150,7 +150,7 @@ export default function App() {
       />
 
       {/* Main Workspace Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-3 sm:px-6 sm:py-4 space-y-4">
+      <main className="flex-1 max-w-[1720px] w-full mx-auto px-4 py-3 sm:px-6 sm:py-4 space-y-4">
         {/* Live Camera Recorder & Barcode Scanner */}
         <section aria-label="Live Camera and Recorder">
           <LiveRecorder
